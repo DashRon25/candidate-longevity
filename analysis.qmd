@@ -1,0 +1,46 @@
+---
+title: "analysis"
+author: "Ronit Dash"
+format: html
+execute:
+  echo: false
+---
+
+```{r}
+#| message: false
+#| label: setup
+library(tidyverse)
+library(primer.data)
+```
+Subject: Longevity
+Broad Question: Election Results and Lifespan
+
+Specific question: How old will Preceptor live to be if he wins the election for mayor of Newton?
+Causal Model
+
+Potential Outcome: death_age
+
+Units: The units are each candidate for mayor.
+
+Covariates: election_age
+
+treatment(?): winning the election 
+
+Validity: Validity might not hold because different states have generally different life expectancies. There also might be a problem depending on how different mayoral elections are from gubernatorial elections.
+
+```{r}
+governors |> filter(state == "Massachusetts", status == "Challenger", sex == "Female")
+```
+
+Justice
+
+Population Table: 
+
+Units: 
+
+
+Stability: Life expectancy increases over time, so it changes how much winning affects age.
+
+Representativeness: The data includes states that don't represent the population of Massachusetts, and it only lists elections for governor, so no specific city populations.
+
+Unconfoundedness: Basically airtight, because election success is However, it is not completely random, as outside factors lead males to be elected more freqeuently.
