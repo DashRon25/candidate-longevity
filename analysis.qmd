@@ -1,5 +1,5 @@
 ---
-title: "analysis"
+title: "Preceptor's Longevity"
 author: "Ronit Dash"
 format: html
 execute:
@@ -7,40 +7,57 @@ execute:
 ---
 
 ```{r}
-#| message: false
 #| label: setup
+#| message: false
 library(tidyverse)
 library(primer.data)
+library(brms)
+library(tidybayes)
+library(gtsummary)
+
+x <- governors |> 
+  select(death_age, election_age, win_margin, party, sex) |> 
+  mutate(treatment = ifelse(win_margin > 0, "win", "lose")) |> 
+  filter(abs(win_margin) < 5)
 ```
-Subject: Longevity
-Broad Question: Election Results and Lifespan
-
-Specific question: How old will Preceptor live to be if he wins the election for mayor of Newton?
-Causal Model
-
-Potential Outcome: death_age
-
-Units: The units are each candidate for mayor.
-
-Covariates: election_age
-
-treatment(?): winning the election 
-
-Validity: Validity might not hold because different states have generally different life expectancies. There also might be a problem depending on how different mayoral elections are from gubernatorial elections.
 
 ```{r}
-governors |> filter(state == "Massachusetts", status == "Challenger", sex == "Female")
+#| cache: true
+fit_1 <- brm(formula = death_age ~ treatment + party + win_margin,
+             data = x,
+             family = gaussian(),
+             refresh = 0,
+             silent = 2,
+             seed = 99)
+
 ```
 
-Justice
+```{r}
+ndata <- tibble(expand_grid(treatment = c("win", "lose"), 
+                            party = c("Democrat", "Republican", "Third party"),
+                            win_margin = 0))
+```
 
-Population Table: 
+```{r}
+fit_1 |>  
+  add_epred_draws(newdata = ndata) |> 
+  ggplot(aes(x = .epred, y = fct_reorder(party, win_margin), fill = party)) + 
+  stat_slab(aes(fill = treatment), position = "dodge") + 
+  labs(
+    title = "Expected Lifespan Given Election Outcome",
+    subtitle = "Winning is associated with about 8 extra years",
+    x = "Expected Lifespan",
+    y = "",
+    fill = "Election Result"
+  )
+```
 
-Units: 
+Using data about US governor candidates from the years 1945 - 2012, we seek to find the relationship between the longevity of Preceptor David Kane and whether or not he wins the Mayoral Election in Newton, MA. Modern medicine has increased the overall lifespan of all candidates regardless of if they won or lost. We modeled age of death as a sum of election result (won/lost), age during election, political party and the win margin. We expect Preceptor to live an extra 8 years (plus/minus 6 years) if he were to win the Mayorial election.
 
+$$death\_age_i = \beta_{0} + \beta_{1} treatment_i + \beta_{2}win\_margin_i + \beta_{4}repub_i + \ beta_{5}thirdparty_i + \epsilon_{i}$$
 
-Stability: Life expectancy increases over time, so it changes how much winning affects age.
+```{r}
+#| warning: false
+fit_1 |> tbl_regression()
+```
 
-Representativeness: The data includes states that don't represent the population of Massachusetts, and it only lists elections for governor, so no specific city populations.
-
-Unconfoundedness: Basically airtight, because election success is However, it is not completely random, as outside factors lead males to be elected more freqeuently.
